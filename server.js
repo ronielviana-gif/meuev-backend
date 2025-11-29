@@ -36,7 +36,16 @@ app.post("/checkout/create", async (req, res) => {
         console.log("🛒 Criando Checkout Pro...");
 
         const externalRef = "MEUEV-" + Date.now();
-        const frontendUrl = process.env.FRONTEND_URL || "https://seu-dominio.com";
+        
+        // Pega a URL do frontend do body da requisição ou do ENV
+        const frontendUrl = req.body.return_url || 
+                           process.env.FRONTEND_URL || 
+                           req.headers.origin || 
+                           req.headers.referer?.split('?')[0] || 
+                           "https://seu-dominio.com";
+
+        console.log("🌐 Frontend URL detectado:", frontendUrl);
+        console.log("🔖 External Reference:", externalRef);
 
         const result = await preference.create({
             body: {
