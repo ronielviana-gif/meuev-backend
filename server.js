@@ -76,12 +76,21 @@ app.post("/checkout/create", async (req, res) => {
         console.log("✅ Checkout criado!");
         console.log("🆔 Preference ID:", result.id);
         console.log("🔗 Checkout URL:", result.init_point);
+        console.log("🔙 Success URL:", `${frontendUrl}?payment=success&ref=${externalRef}`);
+        console.log("🔙 Pending URL:", `${frontendUrl}?payment=pending&ref=${externalRef}`);
+        console.log("🔙 Failure URL:", `${frontendUrl}?payment=failure&ref=${externalRef}`);
 
         // Inicializa status como pendente
         paymentStatus.set(result.id, {
             status: "pending",
             external_reference: externalRef,
             created_at: new Date()
+        });
+
+        console.log("💾 Status inicial salvo:", {
+            preference_id: result.id,
+            external_reference: externalRef,
+            status: "pending"
         });
 
         return res.json({
