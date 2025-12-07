@@ -1,0 +1,230 @@
+{
+  "lastUpdate": "2025-12-07T12:48:46.287Z",
+  "totalVehicles": 19,
+  "vehicles": [
+    {
+      "name": "Renault Kwid E-Tech",
+      "price": 99990,
+      "autonomy": 180,
+      "source": "renault.com.br",
+      "brand": "Renault",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:11.580Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "Renault Megane E-Tech",
+      "price": 279990,
+      "autonomy": 337,
+      "source": "renault.com.br",
+      "brand": "Renault",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:11.581Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "BYD Dolphin Mini",
+      "price": 119900,
+      "autonomy": 280,
+      "source": "byd.com/br",
+      "brand": "BYD",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:13.800Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "BYD Dolphin",
+      "price": 179900,
+      "autonomy": 340,
+      "source": "byd.com/br",
+      "brand": "BYD",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:13.800Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "BYD Yuan Plus",
+      "price": 229900,
+      "autonomy": 430,
+      "source": "byd.com/br",
+      "brand": "BYD",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:13.800Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "BYD Seal",
+      "price": 319900,
+      "autonomy": 520,
+      "source": "byd.com/br",
+      "brand": "BYD",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:13.800Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "BYD Han",
+      "price": 369900,
+      "autonomy": 605,
+      "source": "byd.com/br",
+      "brand": "BYD",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:13.800Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "BYD Tang",
+      "price": 549900,
+      "autonomy": 505,
+      "source": "byd.com/br",
+      "brand": "BYD",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:13.800Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "GWM Ora 03",
+      "price": 139900,
+      "autonomy": 380,
+      "source": "gwm-global.com/br",
+      "brand": "GWM",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:24.121Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "Volvo EX30",
+      "price": 229950,
+      "autonomy": 344,
+      "source": "volvocars.com/br",
+      "brand": "Volvo",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:30.091Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "BMW iX1",
+      "price": 383950,
+      "autonomy": 439,
+      "source": "bmw.com.br",
+      "brand": "BMW",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:32.582Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "Tesla Model 3",
+      "price": 289900,
+      "autonomy": 491,
+      "source": "tesla.com/pt_br",
+      "brand": "Tesla",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:34.757Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "Tesla Model Y",
+      "price": 389900,
+      "autonomy": 533,
+      "source": "tesla.com/pt_br",
+      "brand": "Tesla",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:34.757Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "JAC E-JS1",
+      "price": 139900,
+      "autonomy": 302,
+      "source": "jac.com.br",
+      "brand": "JAC",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:36.822Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "JAC E-JS4",
+      "price": 179900,
+      "autonomy": 380,
+      "source": "jac.com.br",
+      "brand": "JAC",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:36.822Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "Geely Geometry C",
+      "price": 199900,
+      "autonomy": 450,
+      "source": "geely.com.br",
+      "brand": "Geely",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:42.226Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "Geely Emgrand EV",
+      "price": 169900,
+      "autonomy": 420,
+      "source": "geely.com.br",
+      "brand": "Geely",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:42.226Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "Chery Omoda E5",
+      "price": 189900,
+      "autonomy": 430,
+      "source": "chery.com.br",
+      "brand": "Chery",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:44.280Z",
+      "verified": true,
+      "method": "manual_fallback"
+    },
+    {
+      "name": "Chery Jaecoo J7",
+      "price": 219900,
+      "autonomy": 400,
+      "source": "chery.com.br",
+      "brand": "Chery",
+      "type": "EV",
+      "lastUpdate": "2025-12-07T12:48:44.280Z",
+      "verified": true,
+      "method": "manual_fallback"
+    }
+  ],
+  "brands": [
+    "Renault",
+    "BYD",
+    "GWM",
+    "Volvo",
+    "BMW",
+    "Tesla",
+    "JAC",
+    "Geely",
+    "Chery"
+  ],
+  "priceRange": {
+    "min": 99990,
+    "max": 549900
+  }
+}
