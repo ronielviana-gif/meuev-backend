@@ -45,7 +45,7 @@ app.post("/payment/pix", async (req, res) => {
         console.log("💳 Criando pagamento PIX transparente...");
 
         const externalRef = "MEUEV-" + Date.now();
-        const amount = 1.99;
+        const amount = 29.90;
 
         const result = await payment.create({
             body: {
@@ -107,7 +107,7 @@ app.post("/payment/card", async (req, res) => {
 
         const result = await payment.create({
             body: {
-                transaction_amount: 1.99,
+                transaction_amount: 29.90,
                 description: "MeuEV - Relatório Premium",
                 payment_method_id: req.body.payment_method_id || "visa",
                 token: token,
