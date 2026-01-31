@@ -187,7 +187,7 @@ app.post("/checkout/create", async (req, res) => {
                     {
                         title: "MeuEV - Relatório Completo Premium",
                         quantity: 1,
-                        unit_price: 1.99,
+                        unit_price: 29.90,
                         currency_id: "BRL"
                     }
                 ],
@@ -486,27 +486,96 @@ let vehiclesCache = {
 
 // Dados base de veículos (fallback se scraping falhar)
 const baseVehiclesData = [
-    // EVs Entrada
-    { name: 'BYD Dolphin Mini', price: 119900, type: 'EV', autonomy: 380, category: 'Hatch', stars: 4.5, comparable: 'VW Polo/Nivus R$ 110-125k', url: 'https://www.byd.com/br/car/dolphin-mini.html' },
-    { name: 'JAC E-JS1', price: 139900, type: 'EV', autonomy: 302, category: 'Hatch', stars: 4.2, comparable: 'Onix/HB20 R$ 85-95k', url: 'https://www.jacmotors.com.br/e-js1' },
-    { name: 'GWM Ora 03', price: 149900, type: 'EV', autonomy: 400, category: 'Hatch', stars: 4.4, comparable: 'Onix Premier/Polo R$ 95-115k', url: 'https://www.gwm-global.com/br/ora-03' },
+    // === AUDI ===
+    { name: 'Audi Q4 e-tron', price: 429900, type: 'EV', autonomy: 520, category: 'SUV Premium', stars: 4.7, comparable: 'BMW X3 R$ 380k / Audi Q5 R$ 400k', url: 'https://www.audi.com.br' },
+    { name: 'Audi Q8 e-tron', price: 649900, type: 'EV', autonomy: 491, category: 'SUV Premium', stars: 4.7, comparable: 'BMW X5 R$ 580k / GLE R$ 620k', url: 'https://www.audi.com.br' },
+    { name: 'Audi e-tron GT', price: 829900, type: 'EV', autonomy: 488, category: 'Esportivo', stars: 4.9, comparable: 'Panamera R$ 750k / Taycan R$ 690k', url: 'https://www.audi.com.br' },
     
-    // EVs Compactos
-    { name: 'BYD Dolphin', price: 149900, type: 'EV', autonomy: 410, category: 'Compacto', stars: 4.7, comparable: 'Corolla R$ 155k', url: 'https://www.byd.com/br/car/dolphin.html' },
-    { name: 'Renault Megane E-Tech', price: 229900, type: 'EV', autonomy: 450, category: 'Compacto', stars: 4.5, comparable: 'Civic/Corolla R$ 160-180k', url: 'https://www.renault.com.br/megane-e-tech' },
+    // === BMW ===
+    { name: 'BMW iX1', price: 383950, type: 'EV', autonomy: 439, category: 'SUV Premium', stars: 4.7, comparable: 'X1 gasolina R$ 280k + economia', url: 'https://www.bmw.com.br' },
+    { name: 'BMW iX3', price: 449900, type: 'EV', autonomy: 460, category: 'SUV Premium', stars: 4.7, comparable: 'X3 gasolina R$ 380k + economia', url: 'https://www.bmw.com.br' },
+    { name: 'BMW i4', price: 449900, type: 'EV', autonomy: 590, category: 'Sedã Premium', stars: 4.8, comparable: 'Série 4 R$ 420k + economia', url: 'https://www.bmw.com.br' },
+    { name: 'BMW iX', price: 689900, type: 'EV', autonomy: 630, category: 'SUV Premium', stars: 4.8, comparable: 'X5 R$ 580k + economia', url: 'https://www.bmw.com.br' },
+    { name: 'BMW i7', price: 989900, type: 'EV', autonomy: 625, category: 'Sedã Luxo', stars: 4.9, comparable: 'Série 7 R$ 850k + economia', url: 'https://www.bmw.com.br' },
     
-    // SUVs
-    { name: 'BYD Yuan Plus', price: 189900, type: 'EV', autonomy: 410, category: 'SUV', stars: 4.6, comparable: 'Compass/Tiggo 8 R$ 175-195k', url: 'https://www.byd.com/br/car/yuan-plus.html' },
-    { name: 'Volvo EX30', price: 249900, type: 'EV', autonomy: 475, category: 'SUV Premium', stars: 4.8, comparable: 'BMW X1/Audi Q3 R$ 240-270k', url: 'https://www.volvocars.com/br/cars/ex30/' },
-    { name: 'BYD Tang', price: 549900, type: 'EV', autonomy: 505, category: 'SUV Grande', stars: 4.7, comparable: 'SW4/Defender R$ 480-550k', url: 'https://www.byd.com/br/car/tang.html' },
+    // === BYD ===
+    { name: 'BYD Dolphin Mini GL', price: 109900, type: 'EV', autonomy: 280, category: 'Hatch', stars: 4.4, comparable: 'VW Polo R$ 85k / HB20 R$ 95k', url: 'https://www.byd.com/br' },
+    { name: 'BYD Dolphin Mini 5L', price: 119900, type: 'EV', autonomy: 380, category: 'Hatch', stars: 4.5, comparable: 'VW Polo/Nivus R$ 110-125k', url: 'https://www.byd.com/br' },
+    { name: 'BYD Dolphin GS', price: 149900, type: 'EV', autonomy: 410, category: 'Compacto', stars: 4.7, comparable: 'Corolla R$ 155k', url: 'https://www.byd.com/br' },
+    { name: 'BYD Yuan Plus', price: 189900, type: 'EV', autonomy: 410, category: 'SUV', stars: 4.6, comparable: 'Compass/Tiggo 8 R$ 175-195k', url: 'https://www.byd.com/br' },
+    { name: 'BYD Seal', price: 319900, type: 'EV', autonomy: 520, category: 'Sedã Premium', stars: 4.7, comparable: 'Audi A4/BMW 330i R$ 310-370k', url: 'https://www.byd.com/br' },
+    { name: 'BYD Tang', price: 549900, type: 'EV', autonomy: 505, category: 'SUV Grande', stars: 4.7, comparable: 'SW4/Defender R$ 480-550k', url: 'https://www.byd.com/br' },
+    { name: 'BYD Han', price: 399900, type: 'EV', autonomy: 521, category: 'Sedã Premium', stars: 4.7, comparable: 'BMW Série 5 R$ 450k', url: 'https://www.byd.com/br' },
     
-    // Premium
-    { name: 'Tesla Model 3 RWD', price: 289900, type: 'EV', autonomy: 513, category: 'Sedã Premium', stars: 4.9, comparable: 'BMW Série 3 R$ 300-350k', url: 'https://www.tesla.com/pt_br/model3' },
-    { name: 'BYD Seal', price: 319900, type: 'EV', autonomy: 520, category: 'Sedã Premium', stars: 4.7, comparable: 'Audi A4/BMW 330i R$ 310-370k', url: 'https://www.byd.com/br/car/seal.html' },
+    // === CADILLAC ===
+    { name: 'Cadillac Lyriq', price: 589900, type: 'EV', autonomy: 530, category: 'SUV Premium', stars: 4.7, comparable: 'BMW X5 R$ 580k / Audi Q7 R$ 620k', url: 'https://www.cadillac.com.br' },
+    { name: 'Cadillac Optiq', price: 489900, type: 'EV', autonomy: 480, category: 'SUV Premium', stars: 4.6, comparable: 'BMW X3 R$ 380k / GLC R$ 450k', url: 'https://www.cadillac.com.br' },
     
-    // Híbridos
-    { name: 'Toyota Corolla Hybrid', price: 158900, type: 'Híbrido', autonomy: 0, category: 'Sedã', stars: 4.6, comparable: 'Corolla gasolina R$ 155k + economia', url: 'https://www.toyota.com.br/corolla-hybrid' },
-    { name: 'BYD Song Pro', price: 229900, type: 'Híbrido Plug-in', autonomy: 80, category: 'SUV', stars: 4.5, comparable: 'Compass/Tiguan R$ 185-220k', url: 'https://www.byd.com/br/car/song-pro.html' }
+    // === CHEVROLET ===
+    { name: 'Chevrolet Spark EUV', price: 189900, type: 'EV', autonomy: 380, category: 'SUV Compacto', stars: 4.3, comparable: 'Tracker R$ 140k / Creta R$ 160k', url: 'https://www.chevrolet.com.br' },
+    { name: 'Chevrolet Blazer EV', price: 449900, type: 'EV', autonomy: 515, category: 'SUV', stars: 4.6, comparable: 'X3 R$ 380k / Q5 R$ 400k', url: 'https://www.chevrolet.com.br' },
+    { name: 'Chevrolet Equinox EV', price: 389900, type: 'EV', autonomy: 485, category: 'SUV', stars: 4.5, comparable: 'Compass R$ 165k / Tiguan R$ 210k', url: 'https://www.chevrolet.com.br' },
+    
+    // === GAC AION ===
+    { name: 'GAC Aion ES', price: 149900, type: 'EV', autonomy: 410, category: 'Sedã', stars: 4.4, comparable: 'Civic R$ 160k / Corolla R$ 155k', url: 'https://www.gac-aion.com.br' },
+    { name: 'GAC Aion UT', price: 139900, type: 'EV', autonomy: 380, category: 'Hatch', stars: 4.3, comparable: 'Onix Premier R$ 90k / Polo R$ 85k', url: 'https://www.gac-aion.com.br' },
+    
+    // === GEELY ===
+    { name: 'Geely EX2 Pro', price: 129900, type: 'EV', autonomy: 350, category: 'Hatch', stars: 4.3, comparable: 'Onix R$ 80k / HB20 R$ 88k', url: 'https://www.geely.com.br' },
+    { name: 'Geely EX5', price: 169900, type: 'EV', autonomy: 420, category: 'SUV Compacto', stars: 4.4, comparable: 'Creta R$ 160k / Pulse R$ 130k', url: 'https://www.geely.com.br' },
+    
+    // === GWM ===
+    { name: 'GWM Ora 03 Skin', price: 139900, type: 'EV', autonomy: 380, category: 'Hatch', stars: 4.4, comparable: 'Onix Premier R$ 90k / Polo R$ 85k', url: 'https://www.gwm-global.com/br' },
+    { name: 'GWM Ora 03 GT', price: 149900, type: 'EV', autonomy: 400, category: 'Hatch', stars: 4.5, comparable: 'Onix Premier/Polo R$ 95-115k', url: 'https://www.gwm-global.com/br' },
+    
+    // === HYUNDAI ===
+    { name: 'Hyundai Ioniq 5', price: 329900, type: 'EV', autonomy: 507, category: 'SUV Premium', stars: 4.8, comparable: 'X3 R$ 380k / Q5 R$ 400k', url: 'https://www.hyundai.com.br' },
+    { name: 'Hyundai Ioniq 9', price: 489900, type: 'EV', autonomy: 550, category: 'SUV Grande', stars: 4.7, comparable: 'X5 R$ 580k / Q7 R$ 620k', url: 'https://www.hyundai.com.br' },
+    
+    // === JAC ===
+    { name: 'JAC E-JS1', price: 139900, type: 'EV', autonomy: 302, category: 'Hatch', stars: 4.2, comparable: 'Onix/HB20 R$ 85-95k', url: 'https://www.jac.com.br' },
+    { name: 'JAC E-JS3', price: 159900, type: 'EV', autonomy: 350, category: 'Sedã Compacto', stars: 4.3, comparable: 'Onix Plus R$ 95k / HB20S R$ 100k', url: 'https://www.jac.com.br' },
+    { name: 'JAC E-JS4', price: 179900, type: 'EV', autonomy: 380, category: 'SUV', stars: 4.3, comparable: 'Creta R$ 140k / Pulse R$ 130k', url: 'https://www.jac.com.br' },
+    { name: 'JAC E-J7', price: 219900, type: 'EV', autonomy: 450, category: 'SUV', stars: 4.4, comparable: 'Compass R$ 165k / Tiggo 8 R$ 190k', url: 'https://www.jac.com.br' },
+    
+    // === KIA ===
+    { name: 'Kia EV3', price: 249900, type: 'EV', autonomy: 450, category: 'SUV Compacto', stars: 4.6, comparable: 'Creta R$ 160k / Compass R$ 165k', url: 'https://www.kia.com/br' },
+    { name: 'Kia EV5', price: 289900, type: 'EV', autonomy: 490, category: 'SUV', stars: 4.7, comparable: 'Sportage R$ 230k / Tiguan R$ 210k', url: 'https://www.kia.com/br' },
+    { name: 'Kia EV6', price: 379900, type: 'EV', autonomy: 528, category: 'SUV Premium', stars: 4.8, comparable: 'X3 R$ 380k / Q5 R$ 400k', url: 'https://www.kia.com/br' },
+    { name: 'Kia EV9', price: 549900, type: 'EV', autonomy: 560, category: 'SUV Grande', stars: 4.8, comparable: 'X5 R$ 580k / Q7 R$ 620k', url: 'https://www.kia.com/br' },
+    
+    // === LEAPMOTOR ===
+    { name: 'Leapmotor B10', price: 189900, type: 'EV', autonomy: 420, category: 'SUV', stars: 4.4, comparable: 'Compass R$ 165k / Tiggo 8 R$ 190k', url: 'https://www.leapmotor.com.br' },
+    { name: 'Leapmotor C10', price: 229900, type: 'EV', autonomy: 460, category: 'SUV', stars: 4.5, comparable: 'Tiguan R$ 210k / Taos R$ 170k', url: 'https://www.leapmotor.com.br' },
+    
+    // === MERCEDES-BENZ ===
+    { name: 'Mercedes-Benz EQA', price: 489900, type: 'EV', autonomy: 426, category: 'SUV Premium', stars: 4.7, comparable: 'GLA R$ 320k / X1 R$ 280k', url: 'https://www.mercedes-benz.com.br' },
+    { name: 'Mercedes-Benz EQB', price: 529900, type: 'EV', autonomy: 419, category: 'SUV Premium', stars: 4.7, comparable: 'GLB R$ 360k / X3 R$ 380k', url: 'https://www.mercedes-benz.com.br' },
+    { name: 'Mercedes-Benz EQE', price: 789900, type: 'EV', autonomy: 639, category: 'Sedã Luxo', stars: 4.8, comparable: 'Classe E R$ 550k / Série 5 R$ 450k', url: 'https://www.mercedes-benz.com.br' },
+    { name: 'Mercedes-Benz EQS', price: 989900, type: 'EV', autonomy: 784, category: 'Sedã Luxo', stars: 4.9, comparable: 'Classe S R$ 850k / i7 R$ 990k', url: 'https://www.mercedes-benz.com.br' },
+    { name: 'Mercedes-Benz G-Class EQ', price: 1489900, type: 'EV', autonomy: 480, category: 'SUV Luxo', stars: 4.9, comparable: 'G-Class R$ 1.3M + economia', url: 'https://www.mercedes-benz.com.br' },
+    
+    // === MG ===
+    { name: 'MG MG4 Comfort', price: 159900, type: 'EV', autonomy: 350, category: 'Hatch', stars: 4.4, comparable: 'Polo R$ 85k / Onix Premier R$ 90k', url: 'https://www.mgmotor.com.br' },
+    
+    // === PEUGEOT ===
+    { name: 'Peugeot e-208', price: 179900, type: 'EV', autonomy: 362, category: 'Hatch', stars: 4.5, comparable: '208 R$ 95k / Polo R$ 85k', url: 'https://www.peugeot.com.br' },
+    { name: 'Peugeot e-2008', price: 249900, type: 'EV', autonomy: 340, category: 'SUV Compacto', stars: 4.5, comparable: '2008 R$ 140k / Creta R$ 160k', url: 'https://www.peugeot.com.br' },
+    
+    // === PORSCHE ===
+    { name: 'Porsche Taycan', price: 689900, type: 'EV', autonomy: 484, category: 'Esportivo', stars: 4.9, comparable: 'Panamera R$ 750k / 911 R$ 850k', url: 'https://www.porsche.com/brazil' },
+    { name: 'Porsche Macan Electric', price: 579900, type: 'EV', autonomy: 500, category: 'SUV Premium', stars: 4.8, comparable: 'Macan R$ 480k / Cayenne R$ 650k', url: 'https://www.porsche.com/brazil' },
+    
+    // === RENAULT ===
+    { name: 'Renault Kwid E-Tech', price: 99990, type: 'EV', autonomy: 180, category: 'Hatch urbano', stars: 4.2, comparable: 'Kwid gasolina R$ 68k + economia', url: 'https://www.renault.com.br' },
+    { name: 'Renault Megane E-Tech', price: 279990, type: 'EV', autonomy: 337, category: 'Crossover', stars: 4.5, comparable: 'Taos R$ 170k / Compass R$ 165k', url: 'https://www.renault.com.br' },
+    
+    // === VOLVO ===
+    { name: 'Volvo EX30', price: 229950, type: 'EV', autonomy: 344, category: 'SUV Premium', stars: 4.8, comparable: 'BMW X1 R$ 280k / Audi Q3 R$ 270k', url: 'https://www.volvocars.com/br' },
+    { name: 'Volvo XC40 Recharge', price: 349900, type: 'EV', autonomy: 418, category: 'SUV', stars: 4.7, comparable: 'BMW X3 R$ 380k / Audi Q5 R$ 400k', url: 'https://www.volvocars.com/br' },
+    { name: 'Volvo C40 Recharge', price: 389900, type: 'EV', autonomy: 540, category: 'SUV Coupé', stars: 4.7, comparable: 'BMW X4 R$ 450k / GLE Coupé R$ 580k', url: 'https://www.volvocars.com/br' },
+    { name: 'Volvo EX90', price: 689900, type: 'EV', autonomy: 600, category: 'SUV Grande', stars: 4.8, comparable: 'X5 R$ 580k / Q7 R$ 620k', url: 'https://www.volvocars.com/br' },
+    { name: 'Volvo ES90', price: 589900, type: 'EV', autonomy: 580, category: 'Sedã Premium', stars: 4.8, comparable: 'Série 5 R$ 450k / Classe E R$ 550k', url: 'https://www.volvocars.com/br' }
 ];
 
 // Função para atualizar preços (simulação - em produção conectaria a APIs reais)
