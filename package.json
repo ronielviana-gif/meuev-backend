@@ -3,8 +3,10 @@
   "version": "2.0.0",
   "main": "server.js",
   "scripts": {
+    "init": "node init.js",
     "start": "node server.js",
     "scraper": "node scraper.js",
+    "scraper:dealers": "node dealership-scraper.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,6 +17,7 @@
     "axios": "^1.6.2",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^5.1.0",
     "mercadopago": "^2.11.0",
     "node-cron": "^3.0.3"

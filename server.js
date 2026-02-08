@@ -7,6 +7,9 @@
  *  - API REST para frontend consumir dados atualizados
  ******************************************************************/
 
+// Carregar variáveis de ambiente
+require('dotenv').config();
+
 const express = require("express");
 const cors = require("cors");
 const cron = require("node-cron");
@@ -14,6 +17,7 @@ const fs = require("fs");
 const path = require("path");
 const { MercadoPagoConfig, Payment, Preference } = require("mercadopago");
 const { scrapeAllBrands, saveDatabase } = require("./scraper");
+const { scrapeAllDealerships, saveDealershipDatabase } = require("./dealership-scraper");
 
 const app = express();
 app.use(cors());
@@ -712,7 +716,7 @@ updateVehiclePrices();
  *  7) AUTO-UPDATE: SCRAPING A CADA 24H
  ************************************************************/
 
-// Executa scraping todos os dias às 03:00 AM (horário brasileiro)
+// Executa scraping de VEÍCULOS todos os dias às 03:00 AM
 cron.schedule('0 3 * * *', async () => {
     console.log('\n⏰ [CRON] Iniciando atualização automática de veículos...');
     console.log(`📅 ${new Date().toLocaleString('pt-BR')}`);
@@ -731,7 +735,31 @@ cron.schedule('0 3 * * *', async () => {
     timezone: "America/Sao_Paulo"
 });
 
-console.log('⏰ Cron job configurado: Atualização diária às 03:00 AM');
+// Executa scraping de CONCESSIONÁRIAS toda segunda-feira às 04:00 AM
+cron.schedule('0 4 * * 1', async () => {
+    console.log('\n⏰ [CRON] Iniciando atualização automática de concessionárias...');
+    console.log(`📅 ${new Date().toLocaleString('pt-BR')}`);
+    
+    try {
+        await scrapeAllDealerships();
+        saveDealershipDatabase();
+        
+        const dbPath = path.join(__dirname, 'database', 'dealerships.json');
+        const data = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        
+        console.log(`✅ [CRON] Concessionárias atualizadas: ${data.totalDealerships} concessionárias`);
+        console.log(`🏢 [CRON] Marcas com concessionárias: ${data.brands.length}`);
+        
+    } catch (error) {
+        console.error('❌ [CRON] Erro na atualização de concessionárias:', error.message);
+    }
+}, {
+    timezone: "America/Sao_Paulo"
+});
+
+console.log('⏰ Cron jobs configurados:');
+console.log('  - Veículos: Diariamente às 03:00 AM');
+console.log('  - Concessionárias: Semanalmente (segunda às 04:00 AM)');
 
 /************************************************************
  *  8) API REST: DADOS DE VEÍCULOS
@@ -793,9 +821,10 @@ app.get('/api/vehicles/:brand', (req, res) => {
 // GET /api/status - Status do sistema
 app.get('/api/status', (req, res) => {
     try {
-        const dbPath = path.join(__dirname, 'database', 'vehicles.json');
+        const vehiclesPath = path.join(__dirname, 'database', 'vehicles.json');
+        const dealershipsPath = path.join(__dirname, 'database', 'dealerships.json');
         
-        if (!fs.existsSync(dbPath)) {
+        if (!fs.existsSync(vehiclesPath)) {
             return res.json({
                 success: true,
                 status: 'Database não inicializado',
@@ -803,23 +832,122 @@ app.get('/api/status', (req, res) => {
             });
         }
         
-        const data = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
-        const lastUpdateDate = new Date(data.lastUpdate);
+        const vehicleData = JSON.parse(fs.readFileSync(vehiclesPath, 'utf-8'));
+        const lastUpdateDate = new Date(vehicleData.lastUpdate);
         const hoursSinceUpdate = (Date.now() - lastUpdateDate.getTime()) / (1000 * 60 * 60);
+        
+        let dealershipInfo = { hasDealerships: false };
+        if (fs.existsSync(dealershipsPath)) {
+            const dealershipData = JSON.parse(fs.readFileSync(dealershipsPath, 'utf-8'));
+            dealershipInfo = {
+                hasDealerships: true,
+                totalDealerships: dealershipData.totalDealerships,
+                lastUpdate: dealershipData.lastUpdate
+            };
+        }
         
         res.json({
             success: true,
             status: 'Online',
             hasData: true,
-            lastUpdate: data.lastUpdate,
-            hoursSinceUpdate: hoursSinceUpdate.toFixed(1),
-            totalVehicles: data.totalVehicles,
-            brands: data.brands.length,
-            nextUpdate: 'Diariamente às 03:00 AM'
+            vehicles: {
+                lastUpdate: vehicleData.lastUpdate,
+                hoursSinceUpdate: hoursSinceUpdate.toFixed(1),
+                totalVehicles: vehicleData.totalVehicles,
+                brands: vehicleData.brands.length,
+                nextUpdate: 'Diariamente às 03:00 AM'
+            },
+            dealerships: dealershipInfo
         });
         
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// GET /api/dealerships - Retorna todas as concessionárias
+app.get('/api/dealerships', (req, res) => {
+    try {
+        const dbPath = path.join(__dirname, 'database', 'dealerships.json');
+        
+        if (!fs.existsSync(dbPath)) {
+            return res.status(404).json({
+                success: false,
+                error: 'Database de concessionárias não encontrado. Execute: node dealership-scraper.js'
+            });
+        }
+        
+        const data = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        
+        res.json({
+            success: true,
+            lastUpdate: data.lastUpdate,
+            totalDealerships: data.totalDealerships,
+            brands: data.brands
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar dealerships:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao carregar dados de concessionárias'
+        });
+    }
+});
+
+// GET /api/dealerships/:brand - Filtra por marca
+app.get('/api/dealerships/:brand', (req, res) => {
+    try {
+        const dbPath = path.join(__dirname, 'database', 'dealerships.json');
+        const data = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        
+        const brand = req.params.brand;
+        const brandData = data.brands.find(b => b.brand.toLowerCase() === brand.toLowerCase());
+        
+        if (!brandData) {
+            return res.status(404).json({
+                success: false,
+                error: `Nenhuma concessionária encontrada para a marca: ${brand}`
+            });
+        }
+        
+        res.json({
+            success: true,
+            brand: brandData.brand,
+            totalDealerships: brandData.count,
+            dealerships: brandData.dealerships
+        });
+        
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// POST /api/dealerships/force-update - Força atualização manual
+app.post('/api/dealerships/force-update', async (req, res) => {
+    try {
+        console.log('🔄 Iniciando atualização manual de concessionárias...');
+        
+        await scrapeAllDealerships();
+        saveDealershipDatabase();
+        
+        const dbPath = path.join(__dirname, 'database', 'dealerships.json');
+        const data = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        
+        res.json({
+            success: true,
+            message: 'Concessionárias atualizadas com sucesso',
+            totalDealerships: data.totalDealerships,
+            brands: data.brands.length,
+            lastUpdate: data.lastUpdate
+        });
+        
+    } catch (error) {
+        console.error("❌ Erro ao forçar atualização de concessionárias:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Erro ao atualizar concessionárias"
+        });
     }
 });
 
@@ -838,9 +966,14 @@ app.listen(PORT, () => {
     console.log('  🔔 POST   /webhook');
     console.log('  🚗 GET    /api/vehicles');
     console.log('  🚗 GET    /api/vehicles/:brand');
+    console.log('  🏢 GET    /api/dealerships');
+    console.log('  🏢 GET    /api/dealerships/:brand');
+    console.log('  🔄 POST   /api/dealerships/force-update');
     console.log('  ⚙️  GET    /api/status');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('⏰ Auto-update: Diariamente às 03:00 AM');
+    console.log('⏰ Auto-update:');
+    console.log('  - Veículos: Diariamente às 03:00 AM');
+    console.log('  - Concessionárias: Semanalmente (segunda 04:00 AM)');
     console.log('🔄 Execute "npm run scraper" para atualização manual\n');
     console.log("🚗 API Veículos: GET /api/vehicles");
     console.log("📈 Contexto Mercado: GET /api/market-context");
