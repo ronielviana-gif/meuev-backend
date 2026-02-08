@@ -1,0 +1,34 @@
+{
+  "lastUpdate": "2026-02-08T14:50:25.731Z",
+  "totalDealerships": 45,
+  "note": "Configure GOOGLE_PLACES_API_KEY para dados reais",
+  "brands": [
+    {
+      "brand": "BYD",
+      "count": 3,
+      "dealerships": [
+        {
+          "id": "sample-byd-1",
+          "name": "BYD Store São Paulo",
+          "brand": "BYD",
+          "address": "Configure Google API Key para endereços reais",
+          "city": "São Paulo",
+          "state": "SP",
+          "phone": "(11) 0000-0000",
+          "whatsapp": "",
+          "website": "https://www.byd.com/br",
+          "rating": 4.5,
+          "hours": [
+            "Seg-Sex: 9:00-18:00",
+            "Sáb: 9:00-13:00"
+          ],
+          "location": {
+            "lat": -23.55052,
+            "lng": -46.633308
+          },
+          "lastUpdated": "2026-02-08T14:50:25.732Z"
+        }
+      ]
+    }
+  ]
+}

@@ -18,10 +18,14 @@ const path = require("path");
 const { MercadoPagoConfig, Payment, Preference } = require("mercadopago");
 const { scrapeAllBrands, saveDatabase } = require("./scraper");
 const { scrapeAllDealerships, saveDealershipDatabase } = require("./dealership-scraper");
+const { scrapeAllChargers, saveChargersDatabase, loadChargersDatabase, getAllChargers } = require("./chargers-scraper");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Servir arquivos estáticos da pasta raiz do projeto
+app.use(express.static(path.join(__dirname, '..')));
 
 /************************************************************
  *  1) CONFIGURAÇÃO DO MERCADO PAGO
@@ -614,21 +618,31 @@ app.get("/api/vehicles", async (req, res) => {
     try {
         console.log("📊 Requisição de veículos recebida");
         
-        // Verifica se cache expirou
-        const cacheExpired = !vehiclesCache.lastUpdate || 
-                           (Date.now() - vehiclesCache.lastUpdate) > vehiclesCache.ttl;
+        // Ler diretamente do arquivo vehicles.json
+        const dbPath = path.join(__dirname, 'database', 'vehicles.json');
         
-        if (cacheExpired) {
-            console.log("⏰ Cache expirado, atualizando...");
-            await updateVehiclePrices();
-        } else {
-            console.log("✅ Usando cache (válido por mais " + 
-                Math.round((vehiclesCache.ttl - (Date.now() - vehiclesCache.lastUpdate)) / 1000 / 60) + 
-                " minutos)");
+        if (!fs.existsSync(dbPath)) {
+            console.log("⚠️ Database não encontrado, usando fallback");
+            const { budgetMin, budgetMax } = req.query;
+            let vehicles = baseVehiclesData;
+            
+            if (budgetMin || budgetMax) {
+                const min = parseFloat(budgetMin) || 0;
+                const max = parseFloat(budgetMax) || Infinity;
+                vehicles = vehicles.filter(v => v.price >= min && v.price <= max);
+            }
+            
+            return res.json({
+                success: true,
+                count: vehicles.length,
+                lastUpdate: new Date().toISOString(),
+                data: vehicles
+            });
         }
         
+        const fileData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
         const { budgetMin, budgetMax } = req.query;
-        let vehicles = vehiclesCache.data || baseVehiclesData;
+        let vehicles = fileData.vehicles || [];
         
         // Filtra por orçamento se fornecido
         if (budgetMin || budgetMax) {
@@ -640,10 +654,11 @@ app.get("/api/vehicles", async (req, res) => {
         return res.json({
             success: true,
             count: vehicles.length,
-            lastUpdate: vehiclesCache.lastUpdate,
-            cacheAge: vehiclesCache.lastUpdate ? 
-                Math.round((Date.now() - vehiclesCache.lastUpdate) / 1000 / 60) : null,
-            data: vehicles
+            totalVehicles: fileData.totalVehicles,
+            lastUpdate: fileData.lastUpdate,
+            data: vehicles,
+            brands: fileData.brands,
+            priceRange: fileData.priceRange
         });
         
     } catch (error) {
@@ -757,9 +772,28 @@ cron.schedule('0 4 * * 1', async () => {
     timezone: "America/Sao_Paulo"
 });
 
+// Executa scraping de CARREGADORES toda segunda-feira às 05:00 AM
+cron.schedule('0 5 * * 1', async () => {
+    console.log('\n⏰ [CRON] Iniciando atualização automática de carregadores...');
+    console.log(`📅 ${new Date().toLocaleString('pt-BR')}`);
+    
+    try {
+        const chargers = await scrapeAllChargers();
+        saveChargersDatabase();
+        
+        console.log(`✅ [CRON] Carregadores atualizados: ${chargers.length} postos de carregamento`);
+        
+    } catch (error) {
+        console.error('❌ [CRON] Erro na atualização de carregadores:', error.message);
+    }
+}, {
+    timezone: "America/Sao_Paulo"
+});
+
 console.log('⏰ Cron jobs configurados:');
 console.log('  - Veículos: Diariamente às 03:00 AM');
-console.log('  - Concessionárias: Semanalmente (segunda às 04:00 AM)');
+console.log('  - Concessionárias: Semanalmente (segunda às 04:00 AM');
+console.log('  - Carregadores: Semanalmente (segunda às 05:00 AM)');
 
 /************************************************************
  *  8) API REST: DADOS DE VEÍCULOS
@@ -783,7 +817,8 @@ app.get('/api/vehicles', (req, res) => {
             success: true,
             lastUpdate: data.lastUpdate,
             totalVehicles: data.totalVehicles,
-            vehicles: data.vehicles,
+            count: data.totalVehicles,
+            data: data.vehicles,  // Frontend espera 'data' em vez de 'vehicles'
             brands: data.brands,
             priceRange: data.priceRange
         });
@@ -952,11 +987,96 @@ app.post('/api/dealerships/force-update', async (req, res) => {
 });
 
 /************************************************************
+ *  API REST: DADOS DE CARREGADORES
+ ************************************************************/
+
+// Carrega database de carregadores na inicialização
+loadChargersDatabase();
+
+// GET /api/chargers - Retorna todos os carregadores
+app.get('/api/chargers', (req, res) => {
+    try {
+        const dbPath = path.join(__dirname, 'database', 'chargers.json');
+        
+        if (!fs.existsSync(dbPath)) {
+            return res.status(404).json({
+                success: false,
+                error: 'Database de carregadores não encontrado'
+            });
+        }
+        
+        const chargers = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        
+        res.json({
+            success: true,
+            totalChargers: chargers.length,
+            data: chargers
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar carregadores:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao carregar dados de carregadores'
+        });
+    }
+});
+
+// GET /api/chargers/:state - Filtra carregadores por estado
+app.get('/api/chargers/:state', (req, res) => {
+    try {
+        const dbPath = path.join(__dirname, 'database', 'chargers.json');
+        const chargers = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        
+        const state = req.params.state.toUpperCase();
+        const filtered = chargers.filter(c => c.state === state);
+        
+        res.json({
+            success: true,
+            state: state,
+            totalChargers: filtered.length,
+            chargers: filtered
+        });
+        
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// POST /api/chargers/force-update - Força atualização de carregadores (admin)
+app.post('/api/chargers/force-update', async (req, res) => {
+    try {
+        console.log("🔄 Forçando atualização de carregadores...");
+        
+        const chargers = await scrapeAllChargers();
+        saveChargersDatabase();
+        
+        return res.json({
+            success: true,
+            message: 'Carregadores atualizados com sucesso',
+            totalChargers: chargers.length,
+            lastUpdate: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error("❌ Erro ao forçar atualização de carregadores:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Erro ao atualizar carregadores"
+        });
+    }
+});
+
+/************************************************************
  *  9) INICIALIZAÇÃO DO SERVIDOR
  ************************************************************/
+console.log('\n🔧 Iniciando servidor...');
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-    console.log(`\n🚀 Servidor MeuEV rodando na porta ${PORT}`);
+
+console.log(`📡 Tentando escutar na porta ${PORT}...`);
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n✅ Servidor MeuEV REALMENTE rodando na porta ${PORT}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('📡 ENDPOINTS DISPONÍVEIS:');
     console.log('  💳 POST   /payment/pix');
