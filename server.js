@@ -916,9 +916,11 @@ app.get('/api/dealerships', (req, res) => {
         
         res.json({
             success: true,
-            lastUpdate: data.lastUpdate,
-            totalDealerships: data.totalDealerships,
-            brands: data.brands
+            data: {
+                lastUpdate: data.lastUpdate,
+                totalDealerships: data.totalDealerships,
+                brands: data.brands
+            }
         });
         
     } catch (error) {
