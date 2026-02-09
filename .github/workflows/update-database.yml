@@ -1,0 +1,109 @@
+# GitHub Action para atualizar banco de dados automaticamente
+# Executa scraping diariamente e faz commit dos dados atualizados
+
+name: 🔄 Atualizar Database de Veículos
+
+on:
+  schedule:
+    # Executa todos os dias às 06:00 UTC (03:00 BRT)
+    - cron: '0 6 * * *'
+  
+  workflow_dispatch:  # Permite execução manual
+
+jobs:
+  update-database:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout do repositório
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: 📚 Instalar dependências
+        run: |
+          cd meuev-backend
+          npm install
+      
+      - name: 🚗 Executar scraper de veículos
+        run: |
+          cd meuev-backend
+          node scraper.js
+        continue-on-error: true
+      
+      - name: 🏢 Executar scraper de concessionárias (segundas-feiras)
+        if: github.event.schedule == '0 6 * * 1' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd meuev-backend
+          node dealership-scraper.js
+        continue-on-error: true
+      
+      - name: ⚡ Executar scraper de carregadores (segundas-feiras)
+        if: github.event.schedule == '0 6 * * 1' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd meuev-backend
+          node chargers-scraper.js
+        continue-on-error: true
+      
+      - name: 📊 Verificar mudanças
+        id: check_changes
+        run: |
+          cd meuev-backend
+          if [[ -n $(git status -s database/) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Mudanças detectadas no database"
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Nenhuma mudança detectada"
+          fi
+      
+      - name: 💾 Commit e Push das atualizações
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Actions Bot"
+          
+          cd meuev-backend
+          git add database/*.json
+          git add database/backups/
+          git add database/reports/
+          
+          timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+          git commit -m "🤖 Update database - $timestamp"
+          git push
+      
+      - name: 📝 Criar summary
+        if: always()
+        run: |
+          echo "## 📊 Resumo da Atualização" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Data:** $(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "meuev-backend/database/vehicles.json" ]; then
+            vehicles_count=$(jq -r '.totalVehicles' meuev-backend/database/vehicles.json)
+            echo "🚗 **Veículos:** $vehicles_count" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f "meuev-backend/database/dealerships.json" ]; then
+            dealerships_count=$(jq -r '.totalDealerships' meuev-backend/database/dealerships.json)
+            echo "🏢 **Concessionárias:** $dealerships_count" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f "meuev-backend/database/chargers.json" ]; then
+            chargers_count=$(jq -r '.totalChargers' meuev-backend/database/chargers.json)
+            echo "⚡ **Carregadores:** $chargers_count" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ steps.check_changes.outputs.changes }}" == "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Status:** Dados atualizados e commitados" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "ℹ️ **Status:** Nenhuma mudança detectada" >> $GITHUB_STEP_SUMMARY
+          fi
