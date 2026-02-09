@@ -1,0 +1,59 @@
+name: 🔄 Atualizar Database de Veículos
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-database:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout do repositório
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: 📚 Instalar dependências
+        run: npm install
+      
+      - name: 🚗 Executar scraper de veículos
+        run: node scraper.js
+        continue-on-error: true
+      
+      - name: 🏢 Executar scraper de concessionárias
+        run: node dealership-scraper.js
+        continue-on-error: true
+      
+      - name: ⚡ Executar scraper de carregadores
+        run: node chargers-scraper.js
+        continue-on-error: true
+      
+      - name: 📊 Verificar mudanças
+        id: check_changes
+        run: |
+          if [[ -n $(git status -s database/) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Mudanças detectadas no database"
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Nenhuma mudança detectada"
+          fi
+      
+      - name: 💾 Commit e Push das atualizações
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Actions Bot"
+          git add database/*.json
+          git add database/backups/ || true
+          git add database/reports/ || true
+          timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+          git commit -m "🤖 Update database - $timestamp"
+          git push

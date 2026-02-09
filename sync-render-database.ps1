@@ -1,185 +1,130 @@
-# Script para sincronizar dados do Render com o Git
-# Este script baixa os dados atualizados do Render e faz commit no repositório
-
+# Script de sincronizacao de dados do Render para Git
 param(
     [string]$RenderUrl = "https://meuev-backend.onrender.com",
-    [switch]$ForceUpdate = $false,
-    [switch]$AutoCommit = $false
+    [switch]$ForceUpdate,
+    [switch]$AutoCommit
 )
 
-Write-Host "`n🔄 SINCRONIZAÇÃO DE DADOS - RENDER → GIT" -ForegroundColor Cyan
-Write-Host "═══════════════════════════════════════════`n" -ForegroundColor Gray
+Write-Host "`nSINCRONIZACAO DE DADOS - RENDER -> GIT`n" -ForegroundColor Cyan
 
-$projectRoot = "c:\Temp\MeuEV\Projeto"
-$databasePath = "$projectRoot\meuev-backend\database"
+$databasePath = ".\database"
 
-# Função para baixar dados de um endpoint
-function Get-DatabaseFromRender {
-    param(
-        [string]$Endpoint,
-        [string]$FileName
-    )
-    
-    Write-Host "📥 Baixando $FileName..." -NoNewline
-    
-    try {
-        $url = "$RenderUrl$Endpoint"
-        $response = Invoke-RestMethod -Uri $url -Method Get -TimeoutSec 60
-        
-        # Salvar arquivo
-        $filePath = "$databasePath\$FileName"
-        $response | ConvertTo-Json -Depth 10 | Set-Content -Path $filePath -Encoding UTF8
-        
-        Write-Host " ✅" -ForegroundColor Green
-        return $true
-    }
-    catch {
-        Write-Host " ❌" -ForegroundColor Red
-        Write-Host "   Erro: $($_.Exception.Message)" -ForegroundColor Yellow
-        return $false
-    }
-}
-
-# 1. Verificar se o repositório Git está limpo
-Write-Host "🔍 Verificando status do Git..." -ForegroundColor Cyan
-cd $projectRoot
-
+# 1. Verificar Git status
+Write-Host "Verificando status do Git..." -ForegroundColor Yellow
 $gitStatus = git status --porcelain
 if ($gitStatus -and !$AutoCommit) {
-    Write-Host "⚠️  ATENÇÃO: Você tem mudanças não commitadas" -ForegroundColor Yellow
-    Write-Host $gitStatus -ForegroundColor Gray
-    
-    $continue = Read-Host "`nDeseja continuar mesmo assim? (s/n)"
-    if ($continue -ne "s") {
-        Write-Host "❌ Operação cancelada" -ForegroundColor Red
-        exit
-    }
+    Write-Host "Voce tem mudancas nao commitadas" -ForegroundColor Yellow
+    Write-Host $gitStatus
 }
 
-# 2. Forçar atualização no Render (se solicitado)
+# 2. Forcar atualizacao no Render se solicitado
 if ($ForceUpdate) {
-    Write-Host "`n🔄 Forçando atualização no Render..." -ForegroundColor Cyan
+    Write-Host "`nForcando atualizacao no Render...`n" -ForegroundColor Cyan
     
     try {
-        Write-Host "   Atualizando veículos..." -NoNewline
+        Write-Host "  Atualizando veiculos..." -NoNewline
         Invoke-RestMethod -Uri "$RenderUrl/api/force-update" -Method Post -TimeoutSec 120 | Out-Null
-        Write-Host " ✅" -ForegroundColor Green
+        Write-Host " OK" -ForegroundColor Green
         
-        Write-Host "   Atualizando concessionárias..." -NoNewline
+        Write-Host "  Atualizando concessionarias..." -NoNewline
         Invoke-RestMethod -Uri "$RenderUrl/api/dealerships/force-update" -Method Post -TimeoutSec 120 | Out-Null
-        Write-Host " ✅" -ForegroundColor Green
+        Write-Host " OK" -ForegroundColor Green
         
-        Write-Host "   Atualizando carregadores..." -NoNewline
-        Invoke-RestMethod -Uri "$RenderUrl/api/chargers/force-update" -Method Post -TimeoutSec 120 | Out-Null
-        Write-Host " ✅" -ForegroundColor Green
-        
-        Write-Host "`n⏳ Aguardando 5 segundos para processar..." -ForegroundColor Yellow
+        Write-Host "`nAguardando 5 segundos..." -ForegroundColor Yellow
         Start-Sleep -Seconds 5
     }
     catch {
-        Write-Host " ❌" -ForegroundColor Red
-        Write-Host "   Erro: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host " ERRO: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
 # 3. Baixar dados atualizados
-Write-Host "`n📥 Baixando dados atualizados do Render..." -ForegroundColor Cyan
-Write-Host "───────────────────────────────────────────" -ForegroundColor Gray
+Write-Host "`nBaixando dados do Render..." -ForegroundColor Cyan
 
 $success = @()
 $failed = @()
 
-# Baixar veículos
-if (Get-DatabaseFromRender "/api/vehicles" "vehicles.json") {
+# Veiculos
+Write-Host "  Baixando vehicles.json..." -NoNewline
+try {
+    $vehicles = Invoke-RestMethod -Uri "$RenderUrl/api/vehicles" -Method Get -TimeoutSec 60
+    $vehicles | ConvertTo-Json -Depth 10 | Set-Content -Path "$databasePath\vehicles.json" -Encoding UTF8
+    Write-Host " OK" -ForegroundColor Green
     $success += "vehicles.json"
-} else {
+}
+catch {
+    Write-Host " ERRO" -ForegroundColor Red
     $failed += "vehicles.json"
 }
 
-# Baixar concessionárias
+# Concessionarias
+Write-Host "  Baixando dealerships.json..." -NoNewline
 try {
-    Write-Host "📥 Baixando dealerships.json..." -NoNewline
-    $dealerships = Invoke-RestMethod -Uri "$RenderUrl/api/dealerships" -Method Get -TimeoutSec 60
-    $dealerships.data | ConvertTo-Json -Depth 10 | Set-Content -Path "$databasePath\dealerships.json" -Encoding UTF8
-    Write-Host " ✅" -ForegroundColor Green
+    $dealers = Invoke-RestMethod -Uri "$RenderUrl/api/dealerships" -Method Get -TimeoutSec 60
+    $dealers.data | ConvertTo-Json -Depth 10 | Set-Content -Path "$databasePath\dealerships.json" -Encoding UTF8
+    Write-Host " OK" -ForegroundColor Green
     $success += "dealerships.json"
 }
 catch {
-    Write-Host " ❌" -ForegroundColor Red
+    Write-Host " ERRO" -ForegroundColor Red
     $failed += "dealerships.json"
 }
 
-# Baixar carregadores
+# Carregadores
+Write-Host "  Baixando chargers.json..." -NoNewline
 try {
-    Write-Host "📥 Baixando chargers.json..." -NoNewline
     $chargers = Invoke-RestMethod -Uri "$RenderUrl/api/chargers" -Method Get -TimeoutSec 60
     $chargers | ConvertTo-Json -Depth 10 | Set-Content -Path "$databasePath\chargers.json" -Encoding UTF8
-    Write-Host " ✅" -ForegroundColor Green
+    Write-Host " OK" -ForegroundColor Green
     $success += "chargers.json"
 }
 catch {
-    Write-Host " ❌" -ForegroundColor Red
+    Write-Host " ERRO" -ForegroundColor Red
     $failed += "chargers.json"
 }
 
-# 4. Verificar mudanças
-Write-Host "`n📊 Verificando mudanças..." -ForegroundColor Cyan
-Write-Host "───────────────────────────────────────────" -ForegroundColor Gray
-
-cd $projectRoot
-$changes = git status --porcelain meuev-backend/database/
+# 4. Verificar mudancas
+Write-Host "`nVerificando mudancas..." -ForegroundColor Cyan
+$changes = git status --porcelain database/
 
 if (!$changes) {
-    Write-Host "ℹ️  Nenhuma mudança detectada nos dados" -ForegroundColor Yellow
-    Write-Host "   Os dados já estão atualizados no Git" -ForegroundColor Gray
+    Write-Host "Nenhuma mudanca detectada" -ForegroundColor Yellow
 }
 else {
-    Write-Host "✅ Mudanças detectadas:" -ForegroundColor Green
-    Write-Host $changes -ForegroundColor White
+    Write-Host "Mudancas detectadas:" -ForegroundColor Green
+    Write-Host $changes
     
-    # 5. Commit e push (se solicitado)
+    # 5. Commit e push se solicitado
     if ($AutoCommit) {
-        Write-Host "`n💾 Fazendo commit das mudanças..." -ForegroundColor Cyan
+        Write-Host "`nFazendo commit..." -ForegroundColor Cyan
         
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         
-        git add meuev-backend/database/*.json
-        git commit -m "🔄 Sync database from Render - $timestamp"
+        git add database/*.json
+        git commit -m "Sync database from Render - $timestamp"
         git push
         
-        Write-Host "✅ Dados commitados e enviados para o Git!" -ForegroundColor Green
-        Write-Host "   O Render fará redeploy automaticamente" -ForegroundColor Yellow
+        Write-Host "Dados commitados e enviados!" -ForegroundColor Green
     }
     else {
-        Write-Host "`n💡 Para fazer commit, execute:" -ForegroundColor Cyan
-        Write-Host "   git add meuev-backend/database/*.json" -ForegroundColor White
-        Write-Host "   git commit -m 'Update database from Render'" -ForegroundColor White
-        Write-Host "   git push" -ForegroundColor White
-        Write-Host "`nOu execute novamente com -AutoCommit" -ForegroundColor Yellow
+        Write-Host "`nPara fazer commit, execute:" -ForegroundColor Cyan
+        Write-Host "git add database/*.json" -ForegroundColor White
+        Write-Host "git commit -m 'Update database from Render'" -ForegroundColor White
+        Write-Host "git push" -ForegroundColor White
     }
 }
 
 # 6. Resumo
-Write-Host "`n📊 RESUMO DA SINCRONIZAÇÃO" -ForegroundColor Cyan
-Write-Host "═══════════════════════════════════════════" -ForegroundColor Gray
-
-Write-Host "✅ Sucessos: " -NoNewline
-Write-Host $success.Count -ForegroundColor Green
+Write-Host "`n========================================" -ForegroundColor Gray
+Write-Host "RESUMO DA SINCRONIZACAO" -ForegroundColor Cyan
+Write-Host "Sucessos: $($success.Count)" -ForegroundColor Green
 if ($success.Count -gt 0) {
-    $success | ForEach-Object { Write-Host "   - $_" -ForegroundColor Gray }
+    $success | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
 }
 
 if ($failed.Count -gt 0) {
-    Write-Host "`n❌ Falhas: " -NoNewline
-    Write-Host $failed.Count -ForegroundColor Red
-    $failed | ForEach-Object { Write-Host "   - $_" -ForegroundColor Gray }
+    Write-Host "Falhas: $($failed.Count)" -ForegroundColor Red
+    $failed | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
 }
 
-Write-Host "`n═══════════════════════════════════════════`n" -ForegroundColor Gray
-
-# Instruções de uso
-Write-Host "💡 DICAS DE USO:" -ForegroundColor Cyan
-Write-Host "   -ForceUpdate    : Força atualização no Render antes de baixar" -ForegroundColor White
-Write-Host "   -AutoCommit     : Faz commit e push automaticamente" -ForegroundColor White
-Write-Host "`n   Exemplo: .\sync-render-database.ps1 -ForceUpdate -AutoCommit" -ForegroundColor Gray
-Write-Host ""
+Write-Host "`n========================================`n" -ForegroundColor Gray
