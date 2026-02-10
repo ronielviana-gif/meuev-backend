@@ -640,7 +640,17 @@ app.get("/api/vehicles", async (req, res) => {
             });
         }
         
-        const fileData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        let fileData;
+        try {
+            fileData = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        } catch (error) {
+            console.error('Erro ao carregar vehicles.json:', error.message);
+            return res.status(500).json({
+                success: false,
+                error: 'Erro ao carregar banco de dados de veículos'
+            });
+        }
+        
         const { budgetMin, budgetMax } = req.query;
         let vehicles = fileData.vehicles || [];
         
@@ -912,7 +922,16 @@ app.get('/api/dealerships', (req, res) => {
             });
         }
         
-        const data = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        let data;
+        try {
+            data = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        } catch (error) {
+            console.error('Erro ao carregar dealerships.json:', error.message);
+            return res.status(500).json({
+                success: false,
+                error: 'Erro ao carregar banco de dados de concessionárias'
+            });
+        }
         
         res.json({
             success: true,
@@ -1007,7 +1026,24 @@ app.get('/api/chargers', (req, res) => {
             });
         }
         
-        const chargers = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        let chargers;
+        try {
+            const data = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+            // Suporta tanto formato antigo (array) quanto novo (objeto)
+            if (Array.isArray(data)) {
+                chargers = data;
+            } else if (data.data && Array.isArray(data.data)) {
+                chargers = data.data;
+            } else {
+                chargers = [];
+            }
+        } catch (error) {
+            console.error('Erro ao carregar chargers.json:', error.message);
+            return res.status(500).json({
+                success: false,
+                error: 'Erro ao carregar banco de dados de carregadores'
+            });
+        }
         
         res.json({
             success: true,
