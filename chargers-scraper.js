@@ -374,9 +374,24 @@ function loadChargersDatabase() {
   const dbPath = path.join(__dirname, 'database', 'chargers.json');
   
   if (fs.existsSync(dbPath)) {
-    const data = fs.readFileSync(dbPath, 'utf-8');
-    chargersDatabase = JSON.parse(data);
-    console.log(`✅ Database carregado: ${chargersDatabase.length} carregadores`);
+    try {
+      const data = fs.readFileSync(dbPath, 'utf-8');
+      const parsed = JSON.parse(data);
+      
+      // Suporta tanto formato antigo (array) quanto novo (objeto)
+      if (Array.isArray(parsed)) {
+        chargersDatabase = parsed;
+      } else if (parsed.data && Array.isArray(parsed.data)) {
+        chargersDatabase = parsed.data;
+      } else {
+        chargersDatabase = [];
+      }
+      
+      console.log(`✅ Database carregado: ${chargersDatabase.length} carregadores`);
+    } catch (error) {
+      console.error('❌ Erro ao carregar database:', error.message);
+      chargersDatabase = [];
+    }
   } else {
     console.log('⚠️ Database não encontrado. Execute scraping primeiro.');
     chargersDatabase = [];
